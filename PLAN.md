@@ -36,14 +36,28 @@
 - [x] 旧 `auto-help.sh` を削除、`settings.json` の hooks エントリも除去
   > cli-help-db の hook コマンドで新版を生成する運用に切り替え済
 
-## Phase 4: Polish [ ]
+## Phase 4: Polish [~] 一部完了
 
 - [ ] `--all` フラグ（ホワイトリスト無視でフルスキャン）
 - [ ] `--dry-run`, `--verbose`, `--quiet`
 - [ ] 実行サマリ改善
-- [ ] `README.md`
-- [ ] `.gitignore` 作成
+- [x] `README.md`（英語・日本語の2セクション構成）
+- [x] `.gitignore` 作成
 - [ ] 設定ファイルのサンプル同梱
+
+## 中間評価（Phase 1-3 完了時点）
+
+### 強み
+- 課題設定が明確。動的フック → 静的DBへの改善方向が正しい
+- 外部依存 yaml.v3 のみ、stdlib 中心で保守コスト低い
+- 1コマンド1ファイルのDB形式は透明性が高い（grep/catで直接触れる）
+
+### Phase 4 に向けた検討事項
+- **`build` と `update` の統合**: ユーザーが使い分ける動機が弱い。`build` がデフォルトで差分更新にする案
+- **`hook` コマンドの方向性**: スクリプト生成のみ vs `install`/`uninstall` で settings.json 登録まで自動化
+- **`scan` の位置づけ**: 実質デバッグ用。残すかフラグ化するか
+- **cmd パッケージのテスト不足**: E2Eテスト（config → build → list → hook の一連フロー）があると安心
+- **ターゲットユーザー**: Claude Code + PreToolUse hook を使いこなすユーザーは限定的。個人ツール or ブログ記事ネタ向き
 
 ## Key Files to Reference
 
