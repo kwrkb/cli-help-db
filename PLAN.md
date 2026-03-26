@@ -61,14 +61,20 @@
 - [x] `hook.go` に `lazyHookTemplate` 追加、`Generate` に `lazy bool` パラメータ
 - [x] テスト PASS、`wget` で lazy 取得 → DB自動保存を実動作確認済
 
+## Phase 6: Windows 対応 [x] DONE
+
+- [x] `scanner.Filter()` — Windows で `.exe` 等の拡張子を除去してマッチング（`runtime.GOOS == "windows"` ガード付き、Linux/macOS に影響なし）
+- [x] `isExecutable()` — 未使用パラメータ `path` を削除
+- [x] `scanner_test.go` — クロスプラットフォーム対応（`execName()` ヘルパーで OS に応じたファイル名生成）
+- [x] `scanner_windows_test.go` — Windows 固有テスト（`.exe`/`.cmd`/`.bat` 検出、拡張子ストリッピング検証）
+- [x] CI matrix に `windows-latest` 追加
+- [x] README.md — Windows セットアップ手順・config パス追記（英語・日本語両セクション）
+- [x] `config.example.yaml` — Windows パスをヘッダーコメントに追記
+- [x] `VISION.md` — コマンド仕様を分離、理念・方針のみに整理
+
 ## 中間評価（Phase 1-3 完了時点）
 
 ### 強み
 - 課題設定が明確。動的フック → 静的DBへの改善方向が正しい
 - 外部依存 yaml.v3 のみ、stdlib 中心で保守コスト低い
 - 1コマンド1ファイルのDB形式は透明性が高い（grep/catで直接触れる）
-
-## Key Files to Reference
-
-- `/home/yugosasaki/.claude/hooks/auto-help.sh` — 旧フック（削除済。cli-help-db hook で新版を生成する）
-- `/home/yugosasaki/code/helptree/internal/runner/runner.go` — CombinedOutput パターン

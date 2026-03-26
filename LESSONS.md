@@ -62,3 +62,35 @@
 ### シェル展開スキップは `$(...)` も含める
 - `$VAR` と バッククォートのスキップはあったが、`$(cmd)` 形式のコマンド置換がすり抜けていた（レビューで指摘）
 - **ルール**: シェル変数・展開のスキップパターンは `$'*'`、`` ` ``、`$('*'` の3種を必ずカバーする
+
+## Phase 6: Windows 対応 (2026-03-26)
+
+### [Bug] Windows の Scan() はファイル名に拡張子を含む
+- **状況**: `cli-help-db build` が「none of the configured commands were found on $PATH」で全滅
+- **原因**: `Scan()` が `curl.exe` を返すが、config のホワイトリストは `curl`。`Filter()` が完全一致で比較していたためマッチしない
+- **ルール**: Windows では `Scan()` の結果を拡張子なしでもインデックスする。`runtime.GOOS == "windows"` ガードで分岐し、他 OS に影響を与えない
+
+### [Config] Windows の isExecutable は権限ビットではなく拡張子で判定する
+- **状況**: 既存テストが `0755` の権限ビットで「実行可能」を判定していたが、Windows では無意味
+- **原因**: Windows は NTFS ACL で権限管理し、Unix の `mode&0111` は常に true を返す。実行可能判定は PATHEXT 拡張子（`.exe`, `.cmd`, `.bat` 等）で行う必要がある
+- **ルール**: テストで実行可能ファイルを作る場合は OS に応じた命名にする（`execName()` ヘルパーパターン）。Windows 固有テストは `//go:build windows` で分離する
+
+### [Process] WSL で作ったツールは Windows ネイティブで必ず検証する
+- **状況**: WSL 上で全フェーズ完了・テスト PASS だったが、Windows ネイティブでは `scanner_test.go` が FAIL、`Filter()` が機能しなかった
+- **原因**: WSL は Linux 環境であり、Windows 固有のパス解決・拡張子・権限モデルの差異が見えない
+- **ルール**: クロスプラットフォーム対応を謳うなら CI に全ターゲット OS を含める。最低限 `ubuntu-latest` + `windows-latest` の matrix を設定する
+
+### [Config] OS 固有テストファイルにはビルドタグを忘れない
+- **状況**: `scanner_windows_test.go` に `//go:build windows` を付け忘れ、Linux CI で `0644` のファイルが実行可能と判定されず FAIL する
+- **原因**: Go のファイル名規約 `_windows_test.go` はビルドタグの代替にならない（テストでは無視される）
+- **ルール**: `_windows_test.go` / `_linux_test.go` には必ず先頭行に `//go:build` タグを付与する
+
+### [Design] テストは内部ロジック再実装ではなく公開 API を叩く
+- **状況**: `TestFilter_WindowsExtensionStripping` が `Filter()` を呼ばず、内部のマップ構築ロジックを再実装していた（PR レビューで指摘）
+- **原因**: `Filter()` が内部で `Scan()` → `$PATH` を参照するため直接テストしづらいと判断し、ロジックをコピーした
+- **ルール**: `t.Setenv("PATH", dir)` で環境を差し替えて公開関数を直接テストする。内部ロジックの再実装はリファクタ耐性がない
+
+### [Tool] Git Bash は gh api のパスを勝手にファイルパスに変換する
+- **状況**: `gh api /repos/owner/repo/...` が `C:/Program Files/Git/repos/...` に変換されてエラー
+- **原因**: MSYS2 (Git Bash) が `/` 始まりの引数を Windows ファイルパスに自動変換する
+- **ルール**: Git Bash で `gh api` を使う場合は先頭の `/` を省略する（`repos/owner/repo/...`）
