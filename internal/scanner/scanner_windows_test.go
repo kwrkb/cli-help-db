@@ -1,8 +1,12 @@
+//go:build windows
+
 package scanner
 
 import (
 	"os"
 	"path/filepath"
+	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -41,8 +45,8 @@ func TestScanDirs_WindowsExecExtensions(t *testing.T) {
 }
 
 func TestFilter_WindowsExtensionStripping(t *testing.T) {
-	// Create a temp dir with .exe files to simulate Windows PATH
 	dir := t.TempDir()
+	t.Setenv("PATH", dir)
 
 	for _, name := range []string{"curl.exe", "git.exe", "jq.exe"} {
 		if err := os.WriteFile(filepath.Join(dir, name), []byte(""), 0644); err != nil {
@@ -50,33 +54,46 @@ func TestFilter_WindowsExtensionStripping(t *testing.T) {
 		}
 	}
 
-	// Override Scan by testing through ScanDirs directly
-	scanned := ScanDirs([]string{dir})
-
-	// Build the lookup map the same way Filter does
-	all := make(map[string]bool)
-	for _, n := range scanned {
-		all[n] = true
-		base := n[:len(n)-len(filepath.Ext(n))]
-		all[base] = true
+	testCases := []struct {
+		name  string
+		input []string
+		want  []string
+	}{
+		{
+			name:  "names without extension",
+			input: []string{"curl", "git", "jq", "nonexistent"},
+			want:  []string{"curl", "git", "jq"},
+		},
+		{
+			name:  "names with extension",
+			input: []string{"curl.exe", "git.exe", "jq.exe", "nonexistent.exe"},
+			want:  []string{"curl.exe", "git.exe", "jq.exe"},
+		},
+		{
+			name:  "mixed names",
+			input: []string{"curl", "git.exe", "nonexistent"},
+			want:  []string{"curl", "git.exe"},
+		},
+		{
+			name:  "no matches",
+			input: []string{"foo", "bar"},
+			want:  []string{},
+		},
 	}
 
-	// Config-style names (without .exe) should match
-	for _, name := range []string{"curl", "git", "jq"} {
-		if !all[name] {
-			t.Errorf("expected %q to match after extension stripping", name)
-		}
-	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := Filter(tc.input)
 
-	// Names with .exe should also match
-	for _, name := range []string{"curl.exe", "git.exe", "jq.exe"} {
-		if !all[name] {
-			t.Errorf("expected %q to match directly", name)
-		}
-	}
+			if len(got) == 0 && len(tc.want) == 0 {
+				return
+			}
 
-	// Nonexistent should not match
-	if all["nonexistent"] {
-		t.Error("nonexistent command should not be in map")
+			sort.Strings(got)
+			sort.Strings(tc.want)
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("Filter() = %v, want %v", got, tc.want)
+			}
+		})
 	}
 }
