@@ -17,9 +17,14 @@ go install github.com/kwrkb/cli-help-db@latest
 **1. Generate and install the hook**
 
 ```bash
+# Linux / macOS
 mkdir -p ~/.claude/hooks
 cli-help-db hook --lazy > ~/.claude/hooks/auto-help.sh
 chmod +x ~/.claude/hooks/auto-help.sh
+
+# Windows (Git Bash / MSYS2)
+mkdir -p ~/.claude/hooks
+cli-help-db hook --lazy > ~/.claude/hooks/auto-help.sh
 ```
 
 **2. Add to `~/.claude/settings.json`**
@@ -56,6 +61,10 @@ cp config.example.yaml ~/Library/Application\ Support/cli-help-db/config.yaml
 # Linux
 mkdir -p ~/.config/cli-help-db
 cp config.example.yaml ~/.config/cli-help-db/config.yaml
+
+# Windows (Git Bash / MSYS2)
+mkdir -p "$APPDATA/cli-help-db"
+cp config.example.yaml "$APPDATA/cli-help-db/config.yaml"
 ```
 
 Edit the `commands` list in the config file, then run:
@@ -101,6 +110,7 @@ Config file location (resolved via Go's `os.UserConfigDir()`):
 |----|------|
 | macOS | `~/Library/Application Support/cli-help-db/config.yaml` |
 | Linux | `~/.config/cli-help-db/config.yaml` |
+| Windows | `%APPDATA%\cli-help-db\config.yaml` |
 
 See [`config.example.yaml`](config.example.yaml) for a full example:
 
@@ -146,9 +156,14 @@ go install github.com/kwrkb/cli-help-db@latest
 **1. フックを生成・インストール**
 
 ```bash
+# Linux / macOS
 mkdir -p ~/.claude/hooks
 cli-help-db hook --lazy > ~/.claude/hooks/auto-help.sh
 chmod +x ~/.claude/hooks/auto-help.sh
+
+# Windows (Git Bash / MSYS2)
+mkdir -p ~/.claude/hooks
+cli-help-db hook --lazy > ~/.claude/hooks/auto-help.sh
 ```
 
 **2. `~/.claude/settings.json` に追加**
@@ -185,6 +200,10 @@ cp config.example.yaml ~/Library/Application\ Support/cli-help-db/config.yaml
 # Linux
 mkdir -p ~/.config/cli-help-db
 cp config.example.yaml ~/.config/cli-help-db/config.yaml
+
+# Windows (Git Bash / MSYS2)
+mkdir -p "$APPDATA/cli-help-db"
+cp config.example.yaml "$APPDATA/cli-help-db/config.yaml"
 ```
 
 設定ファイルの `commands` リストを編集してから:
@@ -230,6 +249,7 @@ cli-help-db build
 |----|------|
 | macOS | `~/Library/Application Support/cli-help-db/config.yaml` |
 | Linux | `~/.config/cli-help-db/config.yaml` |
+| Windows | `%APPDATA%\cli-help-db\config.yaml` |
 
 完全な例は [`config.example.yaml`](config.example.yaml) を参照:
 
