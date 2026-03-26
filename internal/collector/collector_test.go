@@ -89,6 +89,67 @@ func TestCollect_Parallel(t *testing.T) {
 	}
 }
 
+func TestSplitCommand(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantExe string
+		wantSub []string
+	}{
+		{"curl", "curl", nil},
+		{"docker container ls", "docker", []string{"container", "ls"}},
+		{"kubectl get", "kubectl", []string{"get"}},
+	}
+	for _, tt := range tests {
+		exe, sub := splitCommand(tt.name)
+		if exe != tt.wantExe {
+			t.Errorf("splitCommand(%q) exe = %q, want %q", tt.name, exe, tt.wantExe)
+		}
+		if len(sub) != len(tt.wantSub) {
+			t.Errorf("splitCommand(%q) sub = %v, want %v", tt.name, sub, tt.wantSub)
+			continue
+		}
+		for i := range sub {
+			if sub[i] != tt.wantSub[i] {
+				t.Errorf("splitCommand(%q) sub[%d] = %q, want %q", tt.name, i, sub[i], tt.wantSub[i])
+			}
+		}
+	}
+}
+
+func TestCollect_Subcommand(t *testing.T) {
+	exec := fakeExec(map[string]string{
+		"docker container ls --help": "Usage: docker container ls [OPTIONS]\n\nList containers\n\nOptions:\n  -a, --all  Show all",
+	})
+
+	results := Collect([]string{"docker container ls"}, Options{Exec: exec})
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if results[0].Err != nil {
+		t.Fatalf("unexpected error: %v", results[0].Err)
+	}
+	if !strings.Contains(results[0].Text, "docker container ls") {
+		t.Errorf("expected subcommand help, got %q", results[0].Text)
+	}
+}
+
+func TestCollect_SubcommandHelpFallback(t *testing.T) {
+	// --help and -h fail, but "docker help container ls" succeeds
+	exec := fakeExec(map[string]string{
+		"docker container ls --help": "",
+		"docker container ls -h":     "",
+		"docker help container ls":   "Usage: docker container ls [OPTIONS]\n\nList containers",
+	})
+
+	results := Collect([]string{"docker container ls"}, Options{Exec: exec})
+	if results[0].Err != nil {
+		t.Fatalf("unexpected error: %v", results[0].Err)
+	}
+	if !strings.Contains(results[0].Text, "docker container ls") {
+		t.Errorf("expected help subcommand fallback, got %q", results[0].Text)
+	}
+}
+
 func TestStripManFormatting(t *testing.T) {
 	// Bold: char + backspace + char
 	input := "H\bHe\bel\bll\blo\bo"
