@@ -1,0 +1,32 @@
+# cli-help-db configuration
+# Default location: ~/.config/cli-help-db/config.yaml
+
+# Whitelist of commands to collect --help output for.
+# Only these commands will be indexed (unless --all flag is used).
+commands:
+  - curl
+  - jq
+  - docker
+  - kubectl
+  - terraform
+  - gh
+  - aws
+  - git
+  - rsync
+  - ffmpeg
+
+# Directory to store help text files (one .txt per command).
+# Default: ~/.claude/cli-help
+# output_dir: ~/.claude/cli-help
+
+# Maximum number of lines to keep per command's help output.
+# Default: 60
+# line_limit: 60
+
+# Per-command execution timeout for --help / -h / man.
+# Default: 3s
+# timeout: 3s
+
+# Number of concurrent workers for help collection.
+# Default: 8
+# parallelism: 8
