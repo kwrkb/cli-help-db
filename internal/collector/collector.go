@@ -116,9 +116,7 @@ func collectOne(name string, opts Options) (string, error) {
 	if len(sub) > 0 {
 		ctx3, cancel3 := context.WithTimeout(context.Background(), opts.Timeout)
 		defer cancel3()
-		helpArgs := make([]string, 0, len(sub)+1)
-		helpArgs = append(helpArgs, "help")
-		helpArgs = append(helpArgs, sub...)
+		helpArgs := append([]string{"help"}, sub...)
 		text, err = opts.Exec(ctx3, exe, helpArgs...)
 		if isUsable(text) {
 			return truncate(text, opts.LineLimit), nil
@@ -128,10 +126,7 @@ func collectOne(name string, opts Options) (string, error) {
 	// Try man: for subcommands use hyphenated form (e.g. "man git-remote")
 	ctx4, cancel4 := context.WithTimeout(context.Background(), opts.Timeout)
 	defer cancel4()
-	parts := make([]string, 0, len(sub)+1)
-	parts = append(parts, exe)
-	parts = append(parts, sub...)
-	manPage := strings.Join(parts, "-")
+	manPage := strings.Join(append([]string{exe}, sub...), "-")
 	text, err = opts.Exec(ctx4, "man", manPage)
 	if isUsable(text) {
 		text = stripManFormatting(text)

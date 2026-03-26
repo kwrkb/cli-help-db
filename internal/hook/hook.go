@@ -93,7 +93,7 @@ while [[ -n "$TRY_KEY" ]]; do
     MATCHED_KEY="$TRY_KEY"
     break
   fi
-  # Remove last __ segment (shortest suffix match)
+  # Remove last __ segment (single %% via Fprintf = bash shortest suffix match)
   SHORTER="${TRY_KEY%%__*}"
   [[ "$SHORTER" == "$TRY_KEY" ]] && break  # no __ left
   TRY_KEY="$SHORTER"
@@ -258,7 +258,7 @@ while [[ -n "$TRY_KEY" ]]; do
     fi
     break
   fi
-  # Remove last __ segment (shortest suffix match)
+  # Remove last __ segment (single %% via Fprintf = bash shortest suffix match)
   SHORTER="${TRY_KEY%%__*}"
   [[ "$SHORTER" == "$TRY_KEY" ]] && break  # no __ left
   TRY_KEY="$SHORTER"
