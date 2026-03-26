@@ -31,30 +31,33 @@ func runBuild(args []string) int {
 	var commands []string
 	if *all {
 		commands = scanner.Scan()
-	} else {
-		commands = cfg.Commands
 		if len(commands) == 0 {
+			fmt.Fprintln(os.Stderr, "error: no commands found on $PATH")
+			return 1
+		}
+	} else {
+		if len(cfg.Commands) == 0 {
 			fmt.Fprintln(os.Stderr, "error: no commands configured. Add commands to config file or use --all.")
 			return 1
 		}
-		commands = scanner.Filter(commands)
-	}
-
-	if len(commands) == 0 {
-		fmt.Fprintln(os.Stderr, "error: no commands found on $PATH")
-		return 1
+		commands = scanner.Filter(cfg.Commands)
+		if len(commands) == 0 {
+			fmt.Fprintln(os.Stderr, "error: none of the configured commands were found on $PATH")
+			return 1
+		}
 	}
 
 	// Incremental: skip commands already in DB (unless --force)
 	store := db.New(cfg.OutputDir)
 	if !*force {
-		var missing []string
+		n := 0
 		for _, name := range commands {
 			if !store.Has(name) {
-				missing = append(missing, name)
+				commands[n] = name
+				n++
 			}
 		}
-		commands = missing
+		commands = commands[:n]
 	}
 
 	if len(commands) == 0 {
