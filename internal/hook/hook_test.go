@@ -26,8 +26,8 @@ func TestGenerate(t *testing.T) {
 	}
 
 	// Check it reads from .txt files
-	if !strings.Contains(script, "${BASE_CMD}.txt") {
-		t.Error("expected .txt file lookup pattern")
+	if !strings.Contains(script, "${TRY_KEY}.txt") {
+		t.Error("expected .txt file lookup pattern with TRY_KEY")
 	}
 
 	// Check JSON output format
@@ -41,8 +41,18 @@ func TestGenerate(t *testing.T) {
 	}
 
 	// Non-lazy mode should NOT contain lazy collection
-	if strings.Contains(script, "Lazy collect") {
+	if strings.Contains(script, "lazy_collect") {
 		t.Error("non-lazy mode should not contain lazy collection logic")
+	}
+
+	// Check subcommand support: LOOKUP_KEY construction
+	if !strings.Contains(script, "LOOKUP_KEY") {
+		t.Error("expected LOOKUP_KEY for subcommand support")
+	}
+
+	// Check longest-match loop
+	if !strings.Contains(script, "longest match first") {
+		t.Error("expected longest-match lookup comment")
 	}
 }
 
@@ -66,8 +76,8 @@ func TestGenerateLazy(t *testing.T) {
 	}
 
 	// Check lazy collection logic
-	if !strings.Contains(script, "Lazy collect") {
-		t.Error("lazy mode should contain lazy collection logic")
+	if !strings.Contains(script, "lazy_collect") {
+		t.Error("lazy mode should contain lazy_collect function")
 	}
 
 	// Check timeout usage
@@ -93,5 +103,25 @@ func TestGenerateLazy(t *testing.T) {
 	// Check --lazy comment in header
 	if !strings.Contains(script, "--lazy") {
 		t.Error("lazy script should mention --lazy in header")
+	}
+
+	// Check subcommand support
+	if !strings.Contains(script, "LOOKUP_KEY") {
+		t.Error("expected LOOKUP_KEY for subcommand support")
+	}
+
+	// Check TTL support
+	if !strings.Contains(script, "TTL_SECONDS") {
+		t.Error("lazy mode should have TTL-based refresh")
+	}
+
+	// Check is_expired function
+	if !strings.Contains(script, "is_expired") {
+		t.Error("lazy mode should have is_expired function")
+	}
+
+	// Check help subcommand fallback pattern
+	if !strings.Contains(script, "help \"${subs[@]}\"") {
+		t.Error("lazy mode should try 'cmd help sub...' fallback")
 	}
 }

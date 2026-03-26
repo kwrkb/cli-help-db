@@ -84,6 +84,8 @@ func Exists(name string) bool {
 }
 
 // Filter returns only the names that exist as executables on $PATH.
+// For subcommand entries (containing spaces, e.g. "docker container ls"),
+// only the first token ("docker") is checked against $PATH.
 // On Windows, matches are tried both with and without executable extensions
 // (e.g., "curl" matches "curl.exe").
 func Filter(names []string) []string {
@@ -98,7 +100,12 @@ func Filter(names []string) []string {
 	}
 	var result []string
 	for _, n := range names {
-		if all[n] {
+		// For subcommands, check only the base executable
+		lookup := n
+		if i := strings.IndexByte(n, ' '); i >= 0 {
+			lookup = n[:i]
+		}
+		if all[lookup] {
 			result = append(result, n)
 		}
 	}

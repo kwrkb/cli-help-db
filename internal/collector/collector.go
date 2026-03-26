@@ -74,30 +74,61 @@ func Collect(commands []string, opts Options) []Result {
 	return results
 }
 
+// splitCommand splits a command name into executable and subcommand args.
+// e.g. "docker container ls" -> ("docker", ["container", "ls"])
+// e.g. "curl" -> ("curl", [])
+func splitCommand(name string) (string, []string) {
+	parts := strings.Fields(name)
+	if len(parts) <= 1 {
+		return name, nil
+	}
+	return parts[0], parts[1:]
+}
+
 func collectOne(name string, opts Options) (string, error) {
+	exe, sub := splitCommand(name)
+
+	// Build args safely (avoid mutating sub via append)
+	withFlag := func(flag string) []string {
+		a := make([]string, len(sub)+1)
+		copy(a, sub)
+		a[len(sub)] = flag
+		return a
+	}
+
+	// Try {cmd} {sub...} --help
 	ctx, cancel := context.WithTimeout(context.Background(), opts.Timeout)
 	defer cancel()
-
-	// Try --help
-	text, err := opts.Exec(ctx, name, "--help")
+	text, err := opts.Exec(ctx, exe, withFlag("--help")...)
 	if isUsable(text) {
 		return truncate(text, opts.LineLimit), nil
 	}
 
-	// Try -h
+	// Try {cmd} {sub...} -h
 	ctx2, cancel2 := context.WithTimeout(context.Background(), opts.Timeout)
 	defer cancel2()
-	text, err = opts.Exec(ctx2, name, "-h")
+	text, err = opts.Exec(ctx2, exe, withFlag("-h")...)
 	if isUsable(text) {
 		return truncate(text, opts.LineLimit), nil
 	}
 
-	// Try man (Unix only)
-	ctx3, cancel3 := context.WithTimeout(context.Background(), opts.Timeout)
-	defer cancel3()
-	text, err = opts.Exec(ctx3, "man", name)
+	// Try {cmd} help {sub...} (help subcommand pattern, e.g. "docker help container ls")
+	if len(sub) > 0 {
+		ctx3, cancel3 := context.WithTimeout(context.Background(), opts.Timeout)
+		defer cancel3()
+		helpArgs := append([]string{"help"}, sub...)
+		text, err = opts.Exec(ctx3, exe, helpArgs...)
+		if isUsable(text) {
+			return truncate(text, opts.LineLimit), nil
+		}
+	}
+
+	// Try man: for subcommands use hyphenated form (e.g. "man git-remote")
+	ctx4, cancel4 := context.WithTimeout(context.Background(), opts.Timeout)
+	defer cancel4()
+	manPage := strings.Join(append([]string{exe}, sub...), "-")
+	text, err = opts.Exec(ctx4, "man", manPage)
 	if isUsable(text) {
-		// Strip man formatting
 		text = stripManFormatting(text)
 		return truncate(text, opts.LineLimit), nil
 	}
