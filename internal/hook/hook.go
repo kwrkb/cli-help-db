@@ -11,7 +11,7 @@ import (
 // When lazy is true, the script also collects help on-demand for unknown commands.
 func Generate(w io.Writer, dbDir string, lazy bool) error {
 	if lazy {
-		_, err := fmt.Fprintf(w, lazyHookTemplate, dbDir, dbDir)
+		_, err := fmt.Fprintf(w, lazyHookTemplate, dbDir)
 		return err
 	}
 	_, err := fmt.Fprintf(w, hookTemplate, dbDir)
@@ -38,7 +38,7 @@ read -ra TOKENS <<< "$FIRST_CMD"
 [[ ${#TOKENS[@]} -eq 0 ]] && exit 0
 
 # Skip shell variable / subshell expansion
-[[ "${TOKENS[0]}" == '$'* || "${TOKENS[0]}" == '` + "`" + `'* ]] && exit 0
+[[ "${TOKENS[0]}" == '$'* || "${TOKENS[0]}" == '$('* || "${TOKENS[0]}" == '` + "`" + `'* ]] && exit 0
 
 # Strip sudo / env / wrapper commands
 while [[ ${#TOKENS[@]} -gt 0 ]]; do
@@ -109,7 +109,7 @@ read -ra TOKENS <<< "$FIRST_CMD"
 [[ ${#TOKENS[@]} -eq 0 ]] && exit 0
 
 # Skip shell variable / subshell expansion
-[[ "${TOKENS[0]}" == '$'* || "${TOKENS[0]}" == '` + "`" + `'* ]] && exit 0
+[[ "${TOKENS[0]}" == '$'* || "${TOKENS[0]}" == '$('* || "${TOKENS[0]}" == '` + "`" + `'* ]] && exit 0
 
 # Strip sudo / env / wrapper commands
 while [[ ${#TOKENS[@]} -gt 0 ]]; do
@@ -146,12 +146,19 @@ HELP_FILE="${HELP_DB_DIR}/${BASE_CMD}.txt"
 
 if [[ ! -f "$HELP_FILE" ]]; then
   # Lazy collect: try --help, then -h (skip man — too slow for hook context)
-  LAZY_DB_DIR="%s"
-  mkdir -p "$LAZY_DB_DIR" 2>/dev/null || exit 0
+  mkdir -p "$HELP_DB_DIR" 2>/dev/null || exit 0
 
-  HELP_OUTPUT=$(timeout 2 "$BASE_CMD" --help 2>&1) || true
-  if [[ ${#HELP_OUTPUT} -lt 10 ]]; then
-    HELP_OUTPUT=$(timeout 2 "$BASE_CMD" -h 2>&1) || true
+  # Use timeout if available, otherwise run directly
+  if command -v timeout &>/dev/null; then
+    HELP_OUTPUT=$(timeout 2 "$BASE_CMD" --help 2>&1) || true
+    if [[ ${#HELP_OUTPUT} -lt 10 ]]; then
+      HELP_OUTPUT=$(timeout 2 "$BASE_CMD" -h 2>&1) || true
+    fi
+  else
+    HELP_OUTPUT=$("$BASE_CMD" --help 2>&1) || true
+    if [[ ${#HELP_OUTPUT} -lt 10 ]]; then
+      HELP_OUTPUT=$("$BASE_CMD" -h 2>&1) || true
+    fi
   fi
   [[ ${#HELP_OUTPUT} -lt 10 ]] && exit 0
 
@@ -159,7 +166,7 @@ if [[ ! -f "$HELP_FILE" ]]; then
   HELP_OUTPUT=$(printf '%%s' "$HELP_OUTPUT" | head -n 60)
 
   # Atomic write to DB
-  TMP_FILE=$(mktemp "${LAZY_DB_DIR}/.${BASE_CMD}.XXXXXX") || exit 0
+  TMP_FILE=$(mktemp "${HELP_DB_DIR}/.${BASE_CMD}.XXXXXX") || exit 0
   printf '%%s' "$HELP_OUTPUT" > "$TMP_FILE"
   mv "$TMP_FILE" "$HELP_FILE"
 else
