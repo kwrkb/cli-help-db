@@ -71,13 +71,23 @@ Then add to `~/.claude/settings.json`:
 |---------|-------------|
 | `scan` | List all executable commands on `$PATH` |
 | `build` | Collect `--help` and build the database |
-| `update` | Add only new/missing commands (incremental) |
 | `list` | Show commands stored in the database |
 | `hook` | Generate `auto-help.sh` hook script |
 
+### `build` flags
+
+| Flag | Description |
+|------|-------------|
+| `--force` | Re-collect all commands, ignoring existing database entries |
+| `--all` | Scan all `$PATH` commands instead of config whitelist |
+| `--dry-run` | Show target commands without actually collecting |
+| `-config <path>` | Override config file path |
+
+By default, `build` only collects help for commands not already in the database (incremental). Use `--force` to re-collect everything. Flags can be combined (e.g., `build --all --dry-run`).
+
 ## Config
 
-`~/.config/cli-help-db/config.yaml`:
+`~/.config/cli-help-db/config.yaml` (see [`config.example.yaml`](config.example.yaml) for a full example):
 
 ```yaml
 commands:        # Whitelist of commands to index
@@ -92,7 +102,7 @@ parallelism: 8                   # Concurrent workers
 
 ## How It Works
 
-1. **Build phase** (`cli-help-db build`): For each whitelisted command, tries `--help`, falls back to `-h`, then `man`. Output is trimmed to the configured line limit and saved as `~/.claude/cli-help/{command}.txt`.
+1. **Build phase** (`cli-help-db build`): For each whitelisted command (or all `$PATH` commands with `--all`), tries `--help`, falls back to `-h`, then `man`. Output is trimmed to the configured line limit and saved as `~/.claude/cli-help/{command}.txt`. Already-collected commands are skipped unless `--force` is used.
 
 2. **Runtime phase** (hook): When Claude Code invokes the Bash tool, the hook extracts the command name and looks up `{command}.txt` in the database. If found, it injects the help text via `additionalContext` — no subprocess execution, no timeout risk.
 
@@ -175,13 +185,23 @@ chmod +x ~/.claude/hooks/auto-help.sh
 |---------|------|
 | `scan` | `$PATH` 上の実行可能コマンドを一覧表示 |
 | `build` | `--help` を収集してデータベースを構築 |
-| `update` | 未取得のコマンドだけ差分追加 |
 | `list` | データベース内のコマンド一覧を表示 |
 | `hook` | `auto-help.sh` フックスクリプトを生成 |
 
+### `build` のフラグ
+
+| フラグ | 説明 |
+|-------|------|
+| `--force` | 既存DBを無視して全コマンド再取得 |
+| `--all` | ホワイトリスト無視で `$PATH` 全コマンドを対象にビルド |
+| `--dry-run` | 実際に取得せず対象コマンド一覧を表示 |
+| `-config <path>` | 設定ファイルのパスを指定 |
+
+デフォルトでは未取得のコマンドのみ収集する（差分更新）。`--force` で全再取得。フラグは併用可能（例: `build --all --dry-run`）。
+
 ## 設定
 
-`~/.config/cli-help-db/config.yaml`:
+`~/.config/cli-help-db/config.yaml`（完全な例は [`config.example.yaml`](config.example.yaml) を参照）:
 
 ```yaml
 commands:        # 対象コマンドのホワイトリスト
@@ -196,7 +216,7 @@ parallelism: 8                   # 並列ワーカー数
 
 ## 動作の仕組み
 
-1. **ビルド時** (`cli-help-db build`): ホワイトリストの各コマンドに対して `--help` → `-h` → `man` の順で試行。出力を行数制限でトリミングし、`~/.claude/cli-help/{command}.txt` として保存。
+1. **ビルド時** (`cli-help-db build`): ホワイトリストの各コマンド（`--all` 指定時は `$PATH` 全コマンド）に対して `--help` → `-h` → `man` の順で試行。出力を行数制限でトリミングし、`~/.claude/cli-help/{command}.txt` として保存。`--force` 指定がない場合、既存のコマンドはスキップする。
 
 2. **実行時** (フック): Claude Code が Bash ツールを呼ぶと、フックがコマンド名を抽出し `{command}.txt` を参照。ファイルがあれば `additionalContext` としてヘルプテキストを注入する。サブプロセス実行なし、タイムアウトリスクなし。
 

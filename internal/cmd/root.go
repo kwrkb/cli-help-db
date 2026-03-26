@@ -10,7 +10,6 @@ const usage = `Usage: cli-help-db <command> [options]
 Commands:
   scan     List executable commands on $PATH
   build    Collect --help output and build the database
-  update   Add only new/missing commands to the database
   list     Show commands stored in the database
   hook     Generate auto-help.sh hook script
 
@@ -29,8 +28,6 @@ func Run(args []string) int {
 		return runScan(args[1:])
 	case "build":
 		return runBuild(args[1:])
-	case "update":
-		return runUpdate(args[1:])
 	case "list":
 		return runList(args[1:])
 	case "hook":
