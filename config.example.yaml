@@ -1,5 +1,7 @@
 # cli-help-db configuration
-# Default location: ~/.config/cli-help-db/config.yaml
+# Default location:
+#   macOS: ~/Library/Application Support/cli-help-db/config.yaml
+#   Linux: ~/.config/cli-help-db/config.yaml
 
 # Whitelist of commands to collect --help output for.
 # Only these commands will be indexed (unless --all flag is used).

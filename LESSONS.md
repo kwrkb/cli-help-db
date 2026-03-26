@@ -50,6 +50,11 @@
 - lazy loading を `--lazy` フラグで opt-in にし、デフォルト（フラグなし）は従来の静的参照のみ。既存ユーザーの挙動を変えない
 - **ルール**: 動的処理や副作用（DB書き込み等）を伴う機能追加は opt-in フラグにする。デフォルトは安全側を維持
 
+### macOS の UserConfigDir は ~/.config ではない
+- Go の `os.UserConfigDir()` は macOS で `~/Library/Application Support` を返す。`~/.config/` にファイルを置いても読み込まれない
+- `config.example.yaml` のコメントに `~/.config/cli-help-db/config.yaml` と書いてあるが、macOS では正しくない
+- **ルール**: クロスプラットフォームで config path を案内する際は `os.UserConfigDir()` の実際の戻り値を確認する。README や example にはプラットフォームごとのパスを明記する
+
 ### coreutils の `timeout` は macOS にデフォルトで存在しない
 - lazy hook が `timeout 2 "$BASE_CMD" --help` を使っていたが、macOS の標準シェル環境には GNU `timeout` がない。エラーメッセージが help 出力として誤保存される
 - **ルール**: `timeout` を使う場合は `command -v timeout` で存在チェックし、なければ直接実行にフォールバックする。クロスプラットフォームのシェルスクリプトでは GNU coreutils 固有コマンドに注意

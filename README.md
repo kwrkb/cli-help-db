@@ -49,16 +49,18 @@ That's it. With `--lazy`, the hook automatically collects `--help` on first use 
 If you want to pre-populate the database so that even the first use has no delay, create a config and run `build`:
 
 ```bash
+# macOS
+mkdir -p ~/Library/Application\ Support/cli-help-db
+cp config.example.yaml ~/Library/Application\ Support/cli-help-db/config.yaml
+
+# Linux
 mkdir -p ~/.config/cli-help-db
-cat > ~/.config/cli-help-db/config.yaml << 'EOF'
-commands:
-  - curl
-  - jq
-  - docker
-  - kubectl
-  - gh
-  - aws
-EOF
+cp config.example.yaml ~/.config/cli-help-db/config.yaml
+```
+
+Edit the `commands` list in the config file, then run:
+
+```bash
 cli-help-db build
 ```
 
@@ -93,7 +95,14 @@ With `--lazy`, the hook dynamically collects help text for commands not in the d
 
 ## Config
 
-`~/.config/cli-help-db/config.yaml` (see [`config.example.yaml`](config.example.yaml) for a full example):
+Config file location (resolved via Go's `os.UserConfigDir()`):
+
+| OS | Path |
+|----|------|
+| macOS | `~/Library/Application Support/cli-help-db/config.yaml` |
+| Linux | `~/.config/cli-help-db/config.yaml` |
+
+See [`config.example.yaml`](config.example.yaml) for a full example:
 
 ```yaml
 commands:        # Whitelist of commands to index
@@ -169,16 +178,18 @@ chmod +x ~/.claude/hooks/auto-help.sh
 初回使用時の遅延も避けたい場合は、設定ファイルを作成して `build` を実行:
 
 ```bash
+# macOS
+mkdir -p ~/Library/Application\ Support/cli-help-db
+cp config.example.yaml ~/Library/Application\ Support/cli-help-db/config.yaml
+
+# Linux
 mkdir -p ~/.config/cli-help-db
-cat > ~/.config/cli-help-db/config.yaml << 'EOF'
-commands:
-  - curl
-  - jq
-  - docker
-  - kubectl
-  - gh
-  - aws
-EOF
+cp config.example.yaml ~/.config/cli-help-db/config.yaml
+```
+
+設定ファイルの `commands` リストを編集してから:
+
+```bash
 cli-help-db build
 ```
 
@@ -213,7 +224,14 @@ cli-help-db build
 
 ## 設定
 
-`~/.config/cli-help-db/config.yaml`（完全な例は [`config.example.yaml`](config.example.yaml) を参照）:
+設定ファイルの場所（Go の `os.UserConfigDir()` で解決）:
+
+| OS | パス |
+|----|------|
+| macOS | `~/Library/Application Support/cli-help-db/config.yaml` |
+| Linux | `~/.config/cli-help-db/config.yaml` |
+
+完全な例は [`config.example.yaml`](config.example.yaml) を参照:
 
 ```yaml
 commands:        # 対象コマンドのホワイトリスト
