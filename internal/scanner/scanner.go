@@ -28,7 +28,7 @@ func ScanDirs(dirs []string) []string {
 				continue
 			}
 			name := e.Name()
-			if !seen[name] && isExecutable(filepath.Join(dir, name), e) {
+			if !seen[name] && isExecutable(e) {
 				seen[name] = true
 				names = append(names, name)
 			}
@@ -42,7 +42,7 @@ func pathDirs() []string {
 	return strings.Split(os.Getenv("PATH"), sep)
 }
 
-func isExecutable(path string, entry os.DirEntry) bool {
+func isExecutable(entry os.DirEntry) bool {
 	if runtime.GOOS == "windows" {
 		return hasWindowsExecExt(entry.Name())
 	}
@@ -84,10 +84,17 @@ func Exists(name string) bool {
 }
 
 // Filter returns only the names that exist as executables on $PATH.
+// On Windows, matches are tried both with and without executable extensions
+// (e.g., "curl" matches "curl.exe").
 func Filter(names []string) []string {
 	all := make(map[string]bool)
 	for _, n := range Scan() {
 		all[n] = true
+		// On Windows, also index without extension so "curl" matches "curl.exe"
+		if runtime.GOOS == "windows" {
+			base := strings.TrimSuffix(n, filepath.Ext(n))
+			all[base] = true
+		}
 	}
 	var result []string
 	for _, n := range names {
