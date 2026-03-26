@@ -54,6 +54,13 @@
 - [x] `config.example.yaml` — 全フィールドにコメント付きサンプル設定
 - [x] `README.md` 更新 — update削除反映、build新フラグの説明追記
 
+## Phase 5: Lazy loading [x] DONE
+
+- [x] `hook --lazy` フラグ追加 — DBにないコマンドはその場で `--help` 取得 → DB保存
+  > pure bash 実装。`timeout 2` で `--help` → `-h` フォールバック。`mktemp` + `mv` でアトミック書き込み。`man` はスキップ（hook コンテキストでは遅すぎる）
+- [x] `hook.go` に `lazyHookTemplate` 追加、`Generate` に `lazy bool` パラメータ
+- [x] テスト PASS、`wget` で lazy 取得 → DB自動保存を実動作確認済
+
 ## 中間評価（Phase 1-3 完了時点）
 
 ### 強み

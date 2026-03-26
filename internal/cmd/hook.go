@@ -12,6 +12,7 @@ import (
 func runHook(args []string) int {
 	fs := flag.NewFlagSet("hook", flag.ContinueOnError)
 	configPath := fs.String("config", "", "path to config file")
+	lazy := fs.Bool("lazy", false, "enable lazy collection for unknown commands")
 	if err := fs.Parse(args); err != nil {
 		return 1
 	}
@@ -21,7 +22,7 @@ func runHook(args []string) int {
 		cfg = config.DefaultConfig()
 	}
 
-	if err := hook.Generate(os.Stdout, cfg.OutputDir); err != nil {
+	if err := hook.Generate(os.Stdout, cfg.OutputDir, *lazy); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		return 1
 	}
