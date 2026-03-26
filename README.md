@@ -14,38 +14,15 @@ go install github.com/kwrkb/cli-help-db@latest
 
 ## Quick Start
 
-**1. Create a config file**
+**1. Generate and install the hook**
 
 ```bash
-mkdir -p ~/.config/cli-help-db
-cat > ~/.config/cli-help-db/config.yaml << 'EOF'
-commands:
-  - curl
-  - jq
-  - docker
-  - kubectl
-  - terraform
-  - gh
-  - aws
-EOF
-```
-
-**2. Build the database**
-
-```bash
-cli-help-db build
-```
-
-This collects `--help` output for each command and saves it to `~/.claude/cli-help/` (one `.txt` file per command).
-
-**3. Generate and install the hook**
-
-```bash
-cli-help-db hook > ~/.claude/hooks/auto-help.sh
+mkdir -p ~/.claude/hooks
+cli-help-db hook --lazy > ~/.claude/hooks/auto-help.sh
 chmod +x ~/.claude/hooks/auto-help.sh
 ```
 
-Then add to `~/.claude/settings.json`:
+**2. Add to `~/.claude/settings.json`**
 
 ```json
 {
@@ -63,6 +40,26 @@ Then add to `~/.claude/settings.json`:
     ]
   }
 }
+```
+
+That's it. With `--lazy`, the hook automatically collects `--help` on first use of any command and caches it to `~/.claude/cli-help/` for instant lookup next time. No config file or build step required.
+
+### Optional: Pre-build for zero latency
+
+If you want to pre-populate the database so that even the first use has no delay, create a config and run `build`:
+
+```bash
+mkdir -p ~/.config/cli-help-db
+cat > ~/.config/cli-help-db/config.yaml << 'EOF'
+commands:
+  - curl
+  - jq
+  - docker
+  - kubectl
+  - gh
+  - aws
+EOF
+cli-help-db build
 ```
 
 ## Commands
@@ -84,6 +81,15 @@ Then add to `~/.claude/settings.json`:
 | `-config <path>` | Override config file path |
 
 By default, `build` only collects help for commands not already in the database (incremental). Use `--force` to re-collect everything. Flags can be combined (e.g., `build --all --dry-run`).
+
+### `hook` flags
+
+| Flag | Description |
+|------|-------------|
+| `--lazy` | Enable lazy collection: auto-fetch `--help` for unknown commands on first use |
+| `-config <path>` | Override config file path |
+
+With `--lazy`, the hook dynamically collects help text for commands not in the database, saves it for future lookups, and injects it in the same request. Subsequent uses read from the static DB with zero latency.
 
 ## Config
 
@@ -128,38 +134,15 @@ go install github.com/kwrkb/cli-help-db@latest
 
 ## クイックスタート
 
-**1. 設定ファイルを作成**
+**1. フックを生成・インストール**
 
 ```bash
-mkdir -p ~/.config/cli-help-db
-cat > ~/.config/cli-help-db/config.yaml << 'EOF'
-commands:
-  - curl
-  - jq
-  - docker
-  - kubectl
-  - terraform
-  - gh
-  - aws
-EOF
-```
-
-**2. データベースをビルド**
-
-```bash
-cli-help-db build
-```
-
-各コマンドの `--help` 出力を `~/.claude/cli-help/` に保存する（1コマンド1ファイル）。
-
-**3. フックを生成・インストール**
-
-```bash
-cli-help-db hook > ~/.claude/hooks/auto-help.sh
+mkdir -p ~/.claude/hooks
+cli-help-db hook --lazy > ~/.claude/hooks/auto-help.sh
 chmod +x ~/.claude/hooks/auto-help.sh
 ```
 
-`~/.claude/settings.json` に追加:
+**2. `~/.claude/settings.json` に追加**
 
 ```json
 {
@@ -177,6 +160,26 @@ chmod +x ~/.claude/hooks/auto-help.sh
     ]
   }
 }
+```
+
+これだけで完了。`--lazy` により、コマンド初回使用時に `--help` を自動取得し `~/.claude/cli-help/` にキャッシュする。2回目以降は即座に参照。設定ファイルや事前ビルドは不要。
+
+### オプション: 事前ビルドでゼロレイテンシ
+
+初回使用時の遅延も避けたい場合は、設定ファイルを作成して `build` を実行:
+
+```bash
+mkdir -p ~/.config/cli-help-db
+cat > ~/.config/cli-help-db/config.yaml << 'EOF'
+commands:
+  - curl
+  - jq
+  - docker
+  - kubectl
+  - gh
+  - aws
+EOF
+cli-help-db build
 ```
 
 ## コマンド一覧
@@ -198,6 +201,15 @@ chmod +x ~/.claude/hooks/auto-help.sh
 | `-config <path>` | 設定ファイルのパスを指定 |
 
 デフォルトでは未取得のコマンドのみ収集する（差分更新）。`--force` で全再取得。フラグは併用可能（例: `build --all --dry-run`）。
+
+### `hook` のフラグ
+
+| フラグ | 説明 |
+|-------|------|
+| `--lazy` | 未知のコマンドを初回使用時に自動取得してDBに保存 |
+| `-config <path>` | 設定ファイルのパスを指定 |
+
+`--lazy` を指定すると、DBにないコマンドの `--help` を動的に取得し、DBに保存してから同じリクエストで注入する。2回目以降は静的DB参照でゼロレイテンシ。
 
 ## 設定
 
