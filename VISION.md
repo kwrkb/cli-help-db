@@ -39,7 +39,7 @@ The default mode operates on an explicit whitelist of commands defined in the co
 A full-scan mode (`--all`) is available but opt-in — scanning every binary on `$PATH` without a whitelist is noisy and slow.
 
 ### Configuration
-- **Config file**: `~/.config/cli-help-db/config.yaml`
+- **Config file**: `~/.config/cli-help-db/config.yaml` (Linux), `~/Library/Application Support/cli-help-db/config.yaml` (macOS), `%APPDATA%\cli-help-db\config.yaml` (Windows)
 - **Output directory**: `~/.claude/cli-help/` (default, configurable)
 - Config specifies: command whitelist, line limit, timeout, output path
 
