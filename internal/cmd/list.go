@@ -18,6 +18,10 @@ func runList(args []string) int {
 
 	cfg, err := loadConfig(*configPath)
 	if err != nil {
+		if *configPath != "" {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			return 1
+		}
 		cfg = config.DefaultConfig()
 	}
 
